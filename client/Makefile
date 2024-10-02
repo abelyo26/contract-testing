@@ -7,15 +7,16 @@
 GITHUB_ORG="abelyo26"
 PACTICIPANT="pactflow-react-src"
 GITHUB_WEBHOOK_UUID := "04510dc1-7f0a-4ed2-997d-114bfa86f8ad"
-PACT_CLI="docker run --rm -v ${PWD}:${PWD} -e PACT_BROKER_BASE_URL -e PACT_BROKER_TOKEN pactfoundation/pact-cli"
+PACT_CLI = "docker run --rm -v ${PWD}:${PWD} -e PACT_BROKER_BASE_URL -e PACT_BROKER_TOKEN pactfoundation/pact-cli"
+
 
 .EXPORT_ALL_VARIABLES:
 GIT_COMMIT?=$(shell git rev-parse HEAD)
 GIT_BRANCH?=$(shell git rev-parse --abbrev-ref HEAD)
 ENVIRONMENT?=production
 
-# Only deploy from master (to production env) or test (to test env)
-ifeq ($(GIT_BRANCH),master)
+# Only deploy from main (to production env) or test (to test env)
+ifeq ($(GIT_BRANCH),main)
 	ENVIRONMENT=production
 	DEPLOY_TARGET=deploy
 else
@@ -40,7 +41,7 @@ ci: test publish_pacts can_i_deploy $(DEPLOY_TARGET)
 # Use this for quick feedback when playing around with your workflows.
 fake_ci: .env
 	@CI=true \
-	REACT_APP_API_BASE_URL=http://localhost:8080 \
+	REACT_APP_API_BASE_URL=http://localhost:3000 \
 	make ci
 
 publish_pacts: .env
@@ -65,7 +66,7 @@ create_environment:
 deploy: deploy_app record_deployment
 
 no_deploy:
-	@echo "Not deploying as not on master branch"
+	@echo "Not deploying as not on main branch"
 
 can_i_deploy: .env
 	@echo "\n========== STAGE: can-i-deploy? ==========\n"

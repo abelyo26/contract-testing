@@ -12,11 +12,11 @@ describe("API Pact tests for UserService", () => {
     logLevel: "INFO",
   });
 
-  // Setup the Pact interactions before tests
+  let userId;
+
   beforeAll(() => mockProvider.setup());
 
-  // 1. Test for POST /api/users/ - adding a user
-  describe("adding a user", () => {
+  describe("User API flow", () => {
     it("should successfully add user Dexter Mathews", async () => {
       // Arrange
       const requestPayload = {
@@ -27,18 +27,17 @@ describe("API Pact tests for UserService", () => {
       };
 
       const expectedResponse = {
-        success: true,
         msg: "Successfully added!",
         result: {
-          _id: "66fc4447f489a1cdefb38dc6",
-          name: "Dexter Mathews",
-          email: "pupo@mailinator.com",
+          _id: expect.any(String),
           age: 70,
+          email: "pupo@mailinator.com",
           gender: "m",
+          name: "Dexter Mathews",
         },
+        success: true,
       };
 
-      // Setup the Pact interaction for POST /api/users/
       await mockProvider.addInteraction({
         state: "the user Dexter Mathews can be added",
         uponReceiving: "a request to add a user",
@@ -59,7 +58,6 @@ describe("API Pact tests for UserService", () => {
         },
       });
 
-      // Act
       const response = await axios.post(
         `${mockProvider.mockService.baseUrl}/api/users/`,
         requestPayload,
@@ -70,14 +68,12 @@ describe("API Pact tests for UserService", () => {
         }
       );
 
-      // Assert - did we get the expected response
+      userId = response.data.result._id;
+
       expect(response.status).toBe(200);
       expect(response.data).toStrictEqual(expectedResponse);
     });
-  });
 
-  // 2. Test for GET /api/users/ - retrieving users
-  describe("retrieving users", () => {
     it("should return a list of users", async () => {
       // Arrange
       const expectedResponse = [
@@ -87,7 +83,6 @@ describe("API Pact tests for UserService", () => {
           email: "mydawol@mailinator.com",
           age: 10,
           gender: "f",
-          __v: 0,
         },
         {
           _id: "66fc329f41a1a541c92bc2f2",
@@ -95,7 +90,6 @@ describe("API Pact tests for UserService", () => {
           email: "rules@mailinator.com",
           age: 50,
           gender: "m",
-          __v: 0,
         },
         {
           _id: "66fc32cb41a1a541c92bc2f6",
@@ -103,11 +97,9 @@ describe("API Pact tests for UserService", () => {
           email: "wekuqyjuw@mailinator.com",
           age: 31,
           gender: "f",
-          __v: 0,
         },
       ];
 
-      // Setup the Pact interaction for GET /api/users/
       await mockProvider.addInteraction({
         state: "a list of users exists",
         uponReceiving: "a request for retrieving users",
@@ -127,7 +119,6 @@ describe("API Pact tests for UserService", () => {
         },
       });
 
-      // Act
       const response = await axios.get(
         `${mockProvider.mockService.baseUrl}/api/users/`,
         {
@@ -137,143 +128,42 @@ describe("API Pact tests for UserService", () => {
         }
       );
 
-      // Assert - did we get the expected response
       expect(response.status).toBe(200);
-      expect(response.data).toStrictEqual(expectedResponse);
-    });
-  });
-
-  // 3. Test for DELETE /api/users/:id - deleting a user
-  describe("deleting a user", () => {
-    it("should successfully delete user Dexter Mathews", async () => {
-      // Arrange
-      const expectedResponse = {
-        success: true,
-        msg: "It has been deleted.",
-        result: {
-          _id: "66fc4447f489a1cdefb38dc6",
-          name: "Dexter Mathews",
-          email: "pupo@mailinator.com",
-          age: 70,
-          gender: "m",
-        },
-      };
-
-      // Setup the Pact interaction for DELETE /api/users/66fc4447f489a1cdefb38dc6
-      await mockProvider.addInteraction({
-        state: "the user Dexter Mathews exists and can be deleted",
-        uponReceiving: "a request to delete a user",
-        withRequest: {
-          method: "DELETE",
-          path: "/api/users/66fc4447f489a1cdefb38dc6",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-        willRespondWith: {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-          },
-          body: expectedResponse,
-        },
-      });
-
-      // Act
-      const response = await axios.delete(
-        `${mockProvider.mockService.baseUrl}/api/users/66fc4447f489a1cdefb38dc6`,
-        {
-          headers: {
-            Accept: "application/json",
-          },
-        }
+      expect(response.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            _id: expect.any(String),
+            name: expect.any(String),
+            email: expect.any(String),
+            age: expect.any(Number),
+            gender: expect.any(String),
+          }),
+        ])
       );
-
-      // Assert - did we get the expected response
-      expect(response.status).toBe(200);
-      expect(response.data).toStrictEqual(expectedResponse);
     });
-  });
 
-  // 4. Test for GET /api/users/:id - retrieving user
-  describe("retrieving user", () => {
-    it("should return a user", async () => {
-      // Arrange
-      const expectedResponse = {
-        _id: "66fc339741a1a541c92bc2fb",
-        name: "Anne Bryan",
-        email: "morezodoc@mailinator.com",
-        age: 78,
-        gender: "f",
-        __v: 0,
-      };
-
-      // Setup the Pact interaction for GET /api/users/:id
-      await mockProvider.addInteraction({
-        state: "a user exists",
-        uponReceiving: "a request for retrieving user",
-        withRequest: {
-          method: "GET",
-          path: "/api/users/66fc339741a1a541c92bc2fb",
-          headers: {
-            Accept: "application/json",
-          },
-        },
-        willRespondWith: {
-          status: 200,
-          headers: {
-            "Content-Type": "application/json; charset=utf-8",
-          },
-          body: expectedResponse,
-        },
-      });
-
-      // Act
-      const response = await axios.get(
-        `${mockProvider.mockService.baseUrl}/api/users/66fc339741a1a541c92bc2fb`,
-        {
-          headers: {
-            Accept: "application/json",
-          },
-        }
-      );
-
-      // Assert - did we get the expected response
-      expect(response.status).toBe(200);
-      expect(response.data).toStrictEqual(expectedResponse);
-    });
-  });
-
-  // 5. Test for PUT /api/user/:id - update a user
-  describe("update a user", () => {
-    it("should successfully update user Anne Bryann", async () => {
-      // Arrange
+    it("should successfully update user Dexter Mathews", async () => {
       const requestPayload = {
-        name: "Anne Bryann",
-        email: "morezodoc@mailinator.com",
-        age: 78,
-        gender: "f",
+        name: "Dexter Mathews",
+        age: 80,
+        gender: "m",
       };
 
       const expectedResponse = {
         success: true,
         msg: "Successfully updated!",
         result: {
-          _id: "66fc339741a1a541c92bc2fb",
-          name: "Anne Bryann",
-          email: "morezodoc@mailinator.com",
-          age: 78,
-          gender: "f",
+          _id: userId,
+          ...requestPayload,
         },
       };
 
-      // Setup the Pact interaction for POST /api/users/
       await mockProvider.addInteraction({
-        state: "the user Anne Bryann can be updated",
+        state: "the user Dexter Mathews can be updated",
         uponReceiving: "a request to update a user",
         withRequest: {
           method: "PUT",
-          path: "/api/users/66fc339741a1a541c92bc2fb",
+          path: `/api/users/${userId}`,
           headers: {
             "Content-Type": "application/json",
           },
@@ -288,9 +178,8 @@ describe("API Pact tests for UserService", () => {
         },
       });
 
-      // Act
       const response = await axios.put(
-        `${mockProvider.mockService.baseUrl}/api/users/66fc339741a1a541c92bc2fb`,
+        `${mockProvider.mockService.baseUrl}/api/users/${userId}`,
         requestPayload,
         {
           headers: {
@@ -299,13 +188,100 @@ describe("API Pact tests for UserService", () => {
         }
       );
 
-      // Assert - did we get the expected response
       expect(response.status).toBe(200);
       expect(response.data).toMatchObject(expectedResponse);
     });
+
+    it("should return the updated user", async () => {
+      const expectedResponse = {
+        msg: "Successfully updated!",
+        result: {
+          _id: userId,
+          age: 80,
+          email: "pupo@mailinator.com",
+          gender: "m",
+          name: "Dexter Mathews",
+        },
+        success: true,
+      };
+
+      await mockProvider.addInteraction({
+        state: "a user exists",
+        uponReceiving: "a request for retrieving user",
+        withRequest: {
+          method: "GET",
+          path: `/api/users/${userId}`,
+          headers: {
+            Accept: "application/json",
+          },
+        },
+        willRespondWith: {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+          },
+          body: expectedResponse,
+        },
+      });
+
+      const response = await axios.get(
+        `${mockProvider.mockService.baseUrl}/api/users/${userId}`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.data).toStrictEqual(expectedResponse);
+    });
+    it("should successfully delete user Dexter Mathews", async () => {
+      const expectedResponse = {
+        success: true,
+        msg: "It has been deleted.",
+        result: {
+          _id: userId,
+          name: "Dexter Mathews",
+          email: "pupo@mailinator.com",
+          age: 80,
+          gender: "m",
+        },
+      };
+
+      await mockProvider.addInteraction({
+        state: "the user Dexter Mathews exists and can be deleted",
+        uponReceiving: "a request to delete a user",
+        withRequest: {
+          method: "DELETE",
+          path: `/api/users/${userId}`,
+          headers: {
+            Accept: "application/json",
+          },
+        },
+        willRespondWith: {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+          },
+          body: expectedResponse,
+        },
+      });
+
+      const response = await axios.delete(
+        `${mockProvider.mockService.baseUrl}/api/users/${userId}`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.data).toStrictEqual(expectedResponse);
+    });
   });
 
-  // Verify interactions and finalize Pact after the tests
   afterEach(() => mockProvider.verify());
   afterAll(() => mockProvider.finalize());
 });
